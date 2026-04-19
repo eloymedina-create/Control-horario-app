@@ -49,12 +49,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     
                     let profileData: UserProfile;
 
+                    const isAdmin = firebaseUser.email === ADMIN_EMAIL;
+                    
                     if (snapshot.exists()) {
                         profileData = snapshot.val();
+                        // Forzar rol admin para el email raíz si está desactualizado
+                        if (isAdmin && profileData.role !== 'admin') {
+                            profileData.role = 'admin';
+                            await update(profileRef, { role: 'admin' });
+                        }
                     } else {
-                        // Si el usuario existe en Auth pero no en DB (ej. primer login social o error previo)
-                        // Creamos un perfil básico
-                        const isAdmin = firebaseUser.email === ADMIN_EMAIL;
+                        // Si el usuario existe en Auth pero no en DB
                         profileData = {
                             id: firebaseUser.uid,
                             full_name: firebaseUser.displayName || 'Usuario',
