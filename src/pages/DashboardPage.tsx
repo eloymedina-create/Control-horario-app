@@ -49,25 +49,24 @@ export default function DashboardPage() {
         activeEntry?.pauses || []
     , [activeEntry]);
 
-    // Listener de Firebase
+    // Control de carga global (Fail-safe)
     useEffect(() => {
-        if (!profile?.id) return;
-
-        // Fail-safe: Si Firebase tarda más de 5s, forzamos carga completada
         const timeout = setTimeout(() => {
             setIsLoading(false);
         }, 5000);
+        return () => clearTimeout(timeout);
+    }, []);
+
+    // Listener de Firebase (Estado de jornada)
+    useEffect(() => {
+        if (!profile?.id) return;
 
         const unsubscribe = timeEntryService.subscribeToActiveEntry(profile.id, (entry) => {
-            clearTimeout(timeout);
             setActiveEntry(entry);
             setIsLoading(false);
         });
 
-        return () => {
-            clearTimeout(timeout);
-            unsubscribe();
-        };
+        return () => unsubscribe();
     }, [profile?.id]);
 
     // Timer en tiempo real
@@ -173,8 +172,12 @@ export default function DashboardPage() {
 
     if (isLoading) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-                <div className="pulse-dot" style={{ width: '48px', height: '48px', backgroundColor: 'var(--primary)' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '60vh', gap: '24px' }}>
+                <div className="pulse-dot" style={{ width: '56px', height: '56px', backgroundColor: 'var(--primary)' }} />
+                <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Conectando con el servidor...</p>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '4px' }}>Si esto tarda demasiado, comprueba tu conexión.</p>
+                </div>
             </div>
         );
     }
