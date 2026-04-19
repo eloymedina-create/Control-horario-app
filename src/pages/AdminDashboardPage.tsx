@@ -47,8 +47,13 @@ export default function AdminDashboardPage() {
         try {
             const users = await userService.getAllUsers();
             setAllUsers(users);
-        } catch (error) {
-            showError('Error al cargar la lista de usuarios');
+        } catch (error: any) {
+            console.error('Error al cargar usuarios:', error);
+            if (error?.message?.toLowerCase().includes('permission') || error?.code?.includes('PERMISSION')) {
+                showError('Error de permisos: Las reglas de Firebase bloquean esta consulta.');
+            } else {
+                showError('Error al cargar la lista de usuarios');
+            }
         } finally {
             setIsLoadingUsers(false);
         }
@@ -294,8 +299,41 @@ export default function AdminDashboardPage() {
                                     </tr>
                                 ) : filteredUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>
-                                            No se encontraron usuarios
+                                        <td colSpan={4} style={{ textAlign: 'center', padding: '40px' }}>
+                                            <div style={{ color: 'var(--text-tertiary)', marginBottom: '16px' }}>No se encontraron usuarios</div>
+                                            {currentUserProfile?.role === 'admin' && (
+                                                <div style={{ 
+                                                    background: 'var(--warning-light)', 
+                                                    padding: '16px', 
+                                                    borderRadius: 'var(--radius)',
+                                                    border: '1px solid var(--warning)',
+                                                    maxWidth: '500px',
+                                                    margin: '0 auto',
+                                                    textAlign: 'left'
+                                                }}>
+                                                    <p style={{ fontWeight: 700, color: 'var(--warning)', fontSize: '0.875rem', marginBottom: '8px' }}>
+                                                        ⚠️ ACCIÓN REQUERIDA EN FIREBASE
+                                                    </p>
+                                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                                                        Para listar a los empleados, debes entrar en tu <b>Consola de Firebase &gt; Realtime Database &gt; Rules</b> y asegurarte de tener estas reglas:
+                                                    </p>
+                                                    <pre style={{ 
+                                                        background: 'var(--bg-tertiary)', 
+                                                        padding: '12px', 
+                                                        borderRadius: 'var(--radius-sm)', 
+                                                        fontSize: '0.7rem',
+                                                        overflowX: 'auto',
+                                                        color: 'var(--text-primary)'
+                                                    }}>
+{`{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null"
+  }
+}`}
+                                                    </pre>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ) : (

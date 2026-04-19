@@ -56,13 +56,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         // Forzar rol admin para el email raíz si está desactualizado
                         if (isAdmin && profileData.role !== 'admin') {
                             profileData.role = 'admin';
-                            await update(profileRef, { role: 'admin' });
+                            await update(profileRef, { role: 'admin', updated_at: new Date().toISOString() });
                         }
                     } else {
                         // Si el usuario existe en Auth pero no en DB
                         profileData = {
                             id: firebaseUser.uid,
-                            full_name: firebaseUser.displayName || 'Usuario',
+                            full_name: firebaseUser.displayName || (isAdmin ? 'Administrador' : 'Empleado'),
                             email: firebaseUser.email || '',
                             avatar_url: firebaseUser.photoURL || null,
                             role: isAdmin ? 'admin' : 'employee',
