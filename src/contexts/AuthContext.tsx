@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     
                     let profileData: UserProfile;
 
-                    const isAdmin = firebaseUser.email === ADMIN_EMAIL;
+                    const isAdmin = firebaseUser.email?.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase().trim();
                     
                     if (snapshot.exists()) {
                         profileData = snapshot.val();
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     });
                 } catch (error) {
                     console.error('Error al cargar perfil:', error);
-                    const isAdmin = firebaseUser.email === ADMIN_EMAIL;
+                    const isAdmin = firebaseUser.email?.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase().trim();
                     setState({
                         user: firebaseUser,
                         profile: {

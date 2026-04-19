@@ -94,21 +94,25 @@ export default function ProfilePage() {
                         <Mail size={18} style={{ color: 'var(--text-tertiary)' }} />
                         <div>
                             <div className="stats-label">Email</div>
-                            <div style={{ fontSize: '0.875rem' }}>demo@controlhorario.com</div>
+                            <div style={{ fontSize: '0.875rem' }}>{profile?.email || 'Cargando...'}</div>
                         </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <Calendar size={18} style={{ color: 'var(--text-tertiary)' }} />
                         <div>
                             <div className="stats-label">Miembro desde</div>
-                            <div style={{ fontSize: '0.875rem' }}>Enero 2026</div>
+                            <div style={{ fontSize: '0.875rem' }}>
+                                {profile?.created_at 
+                                    ? new Date(profile.created_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+                                    : 'Recientemente'}
+                            </div>
                         </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <Clock size={18} style={{ color: 'var(--text-tertiary)' }} />
                         <div>
                             <div className="stats-label">Vacaciones anuales</div>
-                            <div style={{ fontSize: '0.875rem' }}>22 días</div>
+                            <div style={{ fontSize: '0.875rem' }}>{profile?.role === 'admin' ? 22 : 15} días</div>
                         </div>
                     </div>
                 </div>
