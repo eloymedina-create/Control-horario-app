@@ -317,21 +317,40 @@ export default function AdminDashboardPage() {
                                                     <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
                                                         Para listar a los empleados, debes entrar en tu <b>Consola de Firebase &gt; Realtime Database &gt; Rules</b> y asegurarte de tener estas reglas:
                                                     </p>
-                                                    <pre style={{ 
-                                                        background: 'var(--bg-tertiary)', 
-                                                        padding: '12px', 
-                                                        borderRadius: 'var(--radius-sm)', 
-                                                        fontSize: '0.7rem',
-                                                        overflowX: 'auto',
-                                                        color: 'var(--text-primary)'
-                                                    }}>
+                                                    <div style={{ position: 'relative' }}>
+                                                        <pre style={{ 
+                                                            background: 'var(--bg-tertiary)', 
+                                                            padding: '12px', 
+                                                            borderRadius: 'var(--radius-sm)', 
+                                                            fontSize: '0.7rem',
+                                                            overflowX: 'auto',
+                                                            color: 'var(--text-primary)',
+                                                            marginBottom: 0
+                                                        }}>
 {`{
   "rules": {
     ".read": "auth != null",
     ".write": "auth != null"
   }
 }`}
-                                                    </pre>
+                                                        </pre>
+                                                        <button 
+                                                            className="btn btn-ghost btn-sm"
+                                                            style={{ position: 'absolute', right: '4px', top: '4px', fontSize: '0.65rem', padding: '4px 8px', height: 'auto' }}
+                                                            onClick={() => {
+                                                                const code = `{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null"
+  }
+}`;
+                                                                navigator.clipboard.writeText(code);
+                                                                showSuccess('Código copiado al portapapeles');
+                                                            }}
+                                                        >
+                                                            Copiar código
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             )}
                                         </td>
