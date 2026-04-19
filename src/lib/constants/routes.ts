@@ -11,6 +11,7 @@ export const ROUTES = {
     PROFILE: '/perfil',
     ADMIN_DASHBOARD: '/admin',
     MANUAL: '/manual',
+    PENDING_APPROVAL: '/acceso-pendiente',
 } as const;
 
 export const PUBLIC_ROUTES = [

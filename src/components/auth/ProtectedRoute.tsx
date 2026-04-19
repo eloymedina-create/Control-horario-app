@@ -4,10 +4,11 @@ import { ROUTES } from '@/lib/constants/routes';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
+    allowPending?: boolean;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
-    const { isAuthenticated, isLoading } = useAuth();
+export function ProtectedRoute({ children, allowPending = false }: ProtectedRouteProps) {
+    const { isAuthenticated, isLoading, profile } = useAuth();
     const location = useLocation();
 
     if (isLoading) {
@@ -29,6 +30,16 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
     if (!isAuthenticated) {
         return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
+    }
+
+    // Bloqueo por estado 'pending'
+    if (profile?.status === 'pending' && !allowPending) {
+        return <Navigate to={ROUTES.PENDING_APPROVAL} replace />;
+    }
+
+    // Si está activo pero intenta entrar en la página de espera
+    if (profile?.status === 'active' && allowPending) {
+        return <Navigate to={ROUTES.DASHBOARD} replace />;
     }
 
     return <>{children}</>;

@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import type { UserProfile } from '@/types/auth';
 
-type AdminTab = 'live' | 'users';
+type AdminTab = 'live' | 'users' | 'requests';
 
 export default function AdminDashboardPage() {
     const { profile: currentUserProfile } = useAuth();
@@ -74,6 +74,22 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const handleUpdateStatus = async (userId: string, newStatus: 'active' | 'inactive', actionLabel: string) => {
+        if (!window.confirm(`¿Estás seguro de que quieres ${actionLabel} a este usuario?`)) return;
+
+        try {
+            const userRef = ref(db, `users/${userId}`);
+            await update(userRef, { 
+                status: newStatus,
+                updated_at: new Date().toISOString()
+            });
+            showSuccess(`Usuario ${newStatus === 'active' ? 'aprobado' : 'desactivado'} correctamente`);
+            loadUsers();
+        } catch (error) {
+            showError('Error al actualizar el estado del usuario');
+        }
+    };
+
     const filteredEmployees = employeeStatuses.filter(emp => 
         emp.full_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -88,6 +104,7 @@ export default function AdminDashboardPage() {
         working: employeeStatuses.filter(e => e.status === 'active').length,
         paused: employeeStatuses.filter(e => e.status === 'paused').length,
         inactive: employeeStatuses.filter(e => e.status === 'idle').length,
+        pending: allUsers.filter(u => u.status === 'pending').length,
     };
 
     const handleSeedData = async () => {
@@ -153,7 +170,26 @@ export default function AdminDashboardPage() {
                     onClick={() => setActiveTab('users')}
                     style={{ gap: '6px' }}
                 >
-                    <UserCog size={16} /> Gestión de Personal
+                    <UserCog size={16} /> Plantilla
+                </button>
+                <button 
+                    className={`btn btn-sm ${activeTab === 'requests' ? (stats.pending > 0 ? 'btn-error' : 'btn-primary') : 'btn-ghost'}`}
+                    onClick={() => setActiveTab('requests')}
+                    style={{ gap: '6px', position: 'relative' }}
+                >
+                    <ShieldAlert size={16} /> Solicitudes
+                    {stats.pending > 0 && (
+                        <span style={{ 
+                            background: 'var(--error)', 
+                            color: 'white', 
+                            fontSize: '0.65rem', 
+                            borderRadius: '10px', 
+                            padding: '1px 6px',
+                            marginLeft: '4px'
+                        }}>
+                            {stats.pending}
+                        </span>
+                    )}
                 </button>
             </div>
 
@@ -259,14 +295,14 @@ export default function AdminDashboardPage() {
                     </div>
                 </>
             ) : (
-                /* GESTION DE USUARIOS */
+                /* GESTION DE USUARIOS / SOLICITUDES */
                 <div className="card" style={{ padding: 0 }}>
                     <div style={{ padding: '20px', borderBottom: '1px solid var(--border-primary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
                             <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
                             <input 
                                 type="text" 
-                                placeholder="Buscar por nombre o email..." 
+                                placeholder={activeTab === 'requests' ? "Buscar solicitudes..." : "Buscar por nombre o email..."}
                                 className="input" 
                                 style={{ paddingLeft: '40px' }}
                                 value={searchTerm}
@@ -284,9 +320,9 @@ export default function AdminDashboardPage() {
                             <thead style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-primary)' }}>
                                 <tr>
                                     <th style={{ textAlign: 'left', padding: '12px 20px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Nombre / Email</th>
-                                    <th style={{ textAlign: 'left', padding: '12px 20px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Rol Actual</th>
+                                    <th style={{ textAlign: 'left', padding: '12px 20px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{activeTab === 'requests' ? 'Fecha Solicitud' : 'Rol Actual'}</th>
                                     <th style={{ textAlign: 'left', padding: '12px 20px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Registrado</th>
-                                    <th style={{ textAlign: 'center', padding: '12px 20px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Cambiar Rol</th>
+                                    <th style={{ textAlign: 'center', padding: '12px 20px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -297,66 +333,17 @@ export default function AdminDashboardPage() {
                                             <p style={{ marginTop: '12px', color: 'var(--text-tertiary)' }}>Cargando empleados...</p>
                                         </td>
                                     </tr>
-                                ) : filteredUsers.length === 0 ? (
+                                ) : (activeTab === 'requests' ? filteredUsers.filter(u => u.status === 'pending') : filteredUsers.filter(u => u.status !== 'pending')).length === 0 ? (
                                     <tr>
                                         <td colSpan={4} style={{ textAlign: 'center', padding: '40px' }}>
-                                            <div style={{ color: 'var(--text-tertiary)', marginBottom: '16px' }}>No se encontraron usuarios</div>
-                                            {currentUserProfile?.role === 'admin' && (
-                                                <div style={{ 
-                                                    background: 'var(--warning-light)', 
-                                                    padding: '16px', 
-                                                    borderRadius: 'var(--radius)',
-                                                    border: '1px solid var(--warning)',
-                                                    maxWidth: '500px',
-                                                    margin: '0 auto',
-                                                    textAlign: 'left'
-                                                }}>
-                                                    <p style={{ fontWeight: 700, color: 'var(--warning)', fontSize: '0.875rem', marginBottom: '8px' }}>
-                                                        ⚠️ ACCIÓN REQUERIDA EN FIREBASE
-                                                    </p>
-                                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                                                        Para listar a los empleados, debes entrar en tu <b>Consola de Firebase &gt; Realtime Database &gt; Rules</b> y asegurarte de tener estas reglas:
-                                                    </p>
-                                                    <div style={{ position: 'relative' }}>
-                                                        <pre style={{ 
-                                                            background: 'var(--bg-tertiary)', 
-                                                            padding: '12px', 
-                                                            borderRadius: 'var(--radius-sm)', 
-                                                            fontSize: '0.7rem',
-                                                            overflowX: 'auto',
-                                                            color: 'var(--text-primary)',
-                                                            marginBottom: 0
-                                                        }}>
-{`{
-  "rules": {
-    ".read": "auth != null",
-    ".write": "auth != null"
-  }
-}`}
-                                                        </pre>
-                                                        <button 
-                                                            className="btn btn-ghost btn-sm"
-                                                            style={{ position: 'absolute', right: '4px', top: '4px', fontSize: '0.65rem', padding: '4px 8px', height: 'auto' }}
-                                                            onClick={() => {
-                                                                const code = `{
-  "rules": {
-    ".read": "auth != null",
-    ".write": "auth != null"
-  }
-}`;
-                                                                navigator.clipboard.writeText(code);
-                                                                showSuccess('Código copiado al portapapeles');
-                                                            }}
-                                                        >
-                                                            Copiar código
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
+                                            <div style={{ color: 'var(--text-tertiary)', marginBottom: '16px' }}>
+                                                {activeTab === 'requests' ? 'No hay solicitudes pendientes' : 'No se encontraron usuarios'}
+                                            </div>
+                                            {/* Guía de Firebase solo en pestaña de Plantilla si hay error de cargo real (simplificado para no duplicar lógica compleja) */}
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredUsers.map((user) => (
+                                    (activeTab === 'requests' ? filteredUsers.filter(u => u.status === 'pending') : filteredUsers.filter(u => u.status !== 'pending')).map((user) => (
                                         <tr key={user.id} style={{ borderBottom: '1px solid var(--border-primary)' }}>
                                             <td style={{ padding: '16px 20px' }}>
                                                 <div>
@@ -365,39 +352,66 @@ export default function AdminDashboardPage() {
                                                 </div>
                                             </td>
                                             <td style={{ padding: '16px 20px' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                    {user.role === 'admin' ? (
-                                                        <Shield size={14} style={{ color: 'var(--primary)' }} />
-                                                    ) : (
-                                                        <Users size={14} style={{ color: 'var(--text-secondary)' }} />
-                                                    )}
-                                                    <span style={{ 
-                                                        fontSize: '0.875rem', 
-                                                        fontWeight: 500,
-                                                        color: user.role === 'admin' ? 'var(--primary)' : 'var(--text-primary)'
-                                                    }}>
-                                                        {user.role === 'admin' ? 'Administrador' : 'Empleado'}
-                                                    </span>
-                                                </div>
+                                                {activeTab === 'requests' ? (
+                                                    <span className="badge badge-inactive">Esperando aprobación</span>
+                                                ) : (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        {user.role === 'admin' ? (
+                                                            <Shield size={14} style={{ color: 'var(--primary)' }} />
+                                                        ) : (
+                                                            <Users size={14} style={{ color: 'var(--text-secondary)' }} />
+                                                        )}
+                                                        <span style={{ 
+                                                            fontSize: '0.875rem', 
+                                                            fontWeight: 500,
+                                                            color: user.role === 'admin' ? 'var(--primary)' : 'var(--text-primary)'
+                                                        }}>
+                                                            {user.role === 'admin' ? 'Administrador' : 'Empleado'}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </td>
                                             <td style={{ padding: '16px 20px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                                                 {new Date(user.created_at).toLocaleDateString('es-ES')}
                                             </td>
                                             <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                                                {user.id !== currentUserProfile?.id ? (
-                                                    <button 
-                                                        className={`btn btn-sm ${user.role === 'admin' ? 'btn-outline' : 'btn-primary'}`}
-                                                        onClick={() => handleUpdateRole(user.id, user.role)}
-                                                        style={{ minWidth: '120px' }}
-                                                    >
-                                                        {user.role === 'admin' ? (
-                                                            <><ShieldAlert size={14} /> Quitar Admin</>
-                                                        ) : (
-                                                            <><Shield size={14} /> Hacer Admin</>
-                                                        )}
-                                                    </button>
+                                                {activeTab === 'requests' ? (
+                                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                                        <button 
+                                                            className="btn btn-primary btn-sm"
+                                                            onClick={() => handleUpdateStatus(user.id, 'active', 'Aprobar')}
+                                                        >
+                                                            Aprobar Acceso
+                                                        </button>
+                                                        <button 
+                                                            className="btn btn-ghost btn-sm"
+                                                            style={{ color: 'var(--error)' }}
+                                                            onClick={() => handleUpdateStatus(user.id, 'inactive', 'Rechazar')}
+                                                        >
+                                                            Rechazar
+                                                        </button>
+                                                    </div>
                                                 ) : (
-                                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>Tú (Maestro)</span>
+                                                    user.id !== currentUserProfile?.id ? (
+                                                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                                            <button 
+                                                                className={`btn btn-sm ${user.role === 'admin' ? 'btn-outline' : 'btn-primary'}`}
+                                                                onClick={() => handleUpdateRole(user.id, user.role)}
+                                                                style={{ minWidth: '110px' }}
+                                                            >
+                                                                {user.role === 'admin' ? 'Quitar Admin' : 'Hacer Admin'}
+                                                            </button>
+                                                            <button 
+                                                                className="btn btn-ghost btn-sm"
+                                                                style={{ color: 'var(--error)' }}
+                                                                onClick={() => handleUpdateStatus(user.id, 'inactive', 'Desactivar')}
+                                                            >
+                                                                Suspender
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>Tú (Maestro)</span>
+                                                    )
                                                 )}
                                             </td>
                                         </tr>

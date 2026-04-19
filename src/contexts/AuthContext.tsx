@@ -53,19 +53,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     
                     if (snapshot.exists()) {
                         profileData = snapshot.val();
-                        // Forzar rol admin para el email raíz si está desactualizado
-                        if (isAdmin && profileData.role !== 'admin') {
-                            profileData.role = 'admin';
-                            await update(profileRef, { role: 'admin', updated_at: new Date().toISOString() });
+                        // Forzar rol admin y status activo para el email raíz si está desactualizado
+                        if (isAdmin) {
+                            let needsUpdate = false;
+                            const updates: any = { updated_at: new Date().toISOString() };
+                            
+                            if (profileData.role !== 'admin') {
+                                profileData.role = 'admin';
+                                updates.role = 'admin';
+                                needsUpdate = true;
+                            }
+                            if (profileData.status !== 'active') {
+                                profileData.status = 'active';
+                                updates.status = 'active';
+                                needsUpdate = true;
+                            }
+                            
+                            if (needsUpdate) {
+                                await update(profileRef, updates);
+                            }
+                        } else if (!profileData.status) {
+                            // Migración para usuarios antiguos: por defecto activos si no tenían campo
+                            profileData.status = 'active';
+                            await update(profileRef, { status: 'active' });
                         }
                     } else {
-                        // Si el usuario existe en Auth pero no en DB
+                        // Si el usuario existe en Auth pero no en DB (primer login tras registro)
                         profileData = {
                             id: firebaseUser.uid,
                             full_name: firebaseUser.displayName || (isAdmin ? 'Administrador' : 'Empleado'),
                             email: firebaseUser.email || '',
                             avatar_url: firebaseUser.photoURL || null,
                             role: isAdmin ? 'admin' : 'employee',
+                            status: isAdmin ? 'active' : 'pending',
                             created_at: new Date().toISOString(),
                             updated_at: new Date().toISOString(),
                         };
@@ -89,6 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                             email: firebaseUser.email || '',
                             avatar_url: null,
                             role: isAdmin ? 'admin' : 'employee',
+                            status: isAdmin ? 'active' : 'pending',
                             created_at: new Date().toISOString(),
                             updated_at: new Date().toISOString(),
                         },

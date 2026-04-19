@@ -5,6 +5,7 @@ export interface UserProfile {
     email: string;
     avatar_url: string | null;
     role: 'admin' | 'employee';
+    status: 'active' | 'pending' | 'inactive';
     created_at: string;
     updated_at: string;
 }

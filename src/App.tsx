@@ -10,6 +10,7 @@ import { ROUTES } from '@/lib/constants/routes';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
+import PendingApprovalPage from '@/pages/auth/PendingApprovalPage';
 import DashboardPage from '@/pages/DashboardPage';
 import HistoryPage from '@/pages/HistoryPage';
 import LeavePage from '@/pages/LeavePage';
@@ -55,6 +56,7 @@ export default function App() {
               <Route path={ROUTES.LOGIN} element={<AuthRedirect><LoginPage /></AuthRedirect>} />
               <Route path={ROUTES.REGISTER} element={<AuthRedirect><RegisterPage /></AuthRedirect>} />
               <Route path={ROUTES.FORGOT_PASSWORD} element={<AuthRedirect><ForgotPasswordPage /></AuthRedirect>} />
+              <Route path={ROUTES.PENDING_APPROVAL} element={<ProtectedRoute allowPending><PendingApprovalPage /></ProtectedRoute>} />
 
               {/* Protected app routes */}
               <Route
