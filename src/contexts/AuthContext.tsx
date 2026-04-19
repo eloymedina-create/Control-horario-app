@@ -80,9 +80,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     });
                 } catch (error) {
                     console.error('Error al cargar perfil:', error);
+                    const isAdmin = firebaseUser.email === ADMIN_EMAIL;
                     setState({
                         user: firebaseUser,
-                        profile: null,
+                        profile: {
+                            id: firebaseUser.uid,
+                            full_name: firebaseUser.displayName || (isAdmin ? 'Admin' : 'Usuario'),
+                            email: firebaseUser.email || '',
+                            avatar_url: null,
+                            role: isAdmin ? 'admin' : 'employee',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                        },
                         isLoading: false,
                         isAuthenticated: true,
                     });
