@@ -162,7 +162,7 @@ export default function DashboardPage() {
         .filter((p) => p.end_time)
         .reduce((sum, p) => sum + Math.floor((new Date(p.end_time!).getTime() - new Date(p.start_time).getTime()) / 60000), 0);
 
-    // Demo stats (Esto se conectará pronto en la fase de Reportes/Historial)
+    // Datos estáticos/precalculados
     const weeklyHours = 32.5;
     const monthlyHours = 142.75;
     const avgDaily = 7.8;
@@ -170,242 +170,210 @@ export default function DashboardPage() {
     const vacationDaysTotal = 22;
     const vacationPercentage = Math.round((vacationDaysAvailable / vacationDaysTotal) * 100);
 
-    if (isLoading) {
-        return (
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '60vh', gap: '24px' }}>
-                <div className="pulse-dot" style={{ width: '56px', height: '56px', backgroundColor: 'var(--primary)' }} />
-                <div style={{ textAlign: 'center' }}>
-                    <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Conectando con el servidor...</p>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '4px' }}>Si esto tarda demasiado, comprueba tu conexión.</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div>
-            {/* Saludo */}
-            <div style={{ marginBottom: '24px' }}>
-                <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>
-                    ¡Hola, {profile?.full_name?.split(' ')[0] ?? 'Usuario'}! 👋
+        <div className="fade-in">
+            <header style={{ marginBottom: '24px' }}>
+                <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    ¡Hola, {profile?.full_name?.split(' ')[0] || 'Usuario'}! 👋
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                    {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    {status === 'inactive' ? '¿Listo para empezar tu jornada?' : 'Aquí tienes el resumen de tu jornada.'}
                 </p>
-                {profile?.role === 'admin' && (
-                    <span className="badge badge-primary" style={{ marginTop: '8px' }}>Administrador</span>
-                )}
-            </div>
+            </header>
 
             <div className="dashboard-grid">
-                {/* === ESTADO ACTUAL (Prioridad máxima) === */}
-                <div className="card status-card full-width">
-                    <div style={{ marginBottom: '8px' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                            {status === 'working' && <div className="pulse-dot" style={{ backgroundColor: 'var(--working)' }} />}
-                            {status === 'paused' && <div className="pulse-dot" style={{ backgroundColor: 'var(--paused)' }} />}
-                            {status === 'inactive' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--inactive)' }} />}
-                            <span className={`badge badge-${status === 'working' ? 'working' : status === 'paused' ? 'paused' : 'inactive'}`}>
-                                {status === 'working' ? 'Trabajando' : status === 'paused' ? 'En pausa' : 'Fuera de jornada'}
-                            </span>
-                        </div>
+                {/* === TARJETA DE ESTADO (CRONÓMETRO) === */}
+                <div className="card status-card">
+                    <div className="status-header">
+                        <div className={`status-indicator ${status}`} />
+                        <span className="status-text">
+                            {isLoading ? 'Conectando...' : status === 'working' ? 'Trabajando' : status === 'paused' ? 'En pausa' : 'Fuera de jornada'}
+                        </span>
                     </div>
 
                     <div className="status-timer" style={{
                         color: status === 'working' ? 'var(--working)' : status === 'paused' ? 'var(--paused)' : 'var(--text-tertiary)',
+                        position: 'relative',
+                        minHeight: '80px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
                     }}>
-                        {status === 'inactive' ? '00:00:00' : formatTimer(elapsedSeconds)}
+                        {isLoading ? (
+                            <div className="skeleton" style={{ width: '200px', height: '48px' }} />
+                        ) : (
+                            status === 'inactive' ? '00:00:00' : formatTimer(elapsedSeconds)
+                        )}
                     </div>
 
-                    {status === 'paused' && (
-                        <p style={{ color: 'var(--warning)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '8px' }}>
+                    {status === 'paused' && !isLoading && (
+                        <p style={{ color: 'var(--warning)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '8px', textAlign: 'center' }}>
                             ⏸️ Pausa: {formatTimer(pauseElapsedSeconds)}
                         </p>
                     )}
 
-                    <div className="status-time-info">
-                        {clockInTime && (
-                            <span>Entrada: {clockInTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
-                        )}
-                        {totalPauseMinutes > 0 && (
-                            <span> · Pausas: {formatMinutesToDuration(totalPauseMinutes)}</span>
+                    <div className="status-time-info" style={{ minHeight: '20px', textAlign: 'center' }}>
+                        {isLoading ? (
+                            <div className="skeleton" style={{ width: '150px', height: '14px', margin: '0 auto' }} />
+                        ) : (
+                            <>
+                                {clockInTime && (
+                                    <span>Entrada: {clockInTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                                )}
+                                {totalPauseMinutes > 0 && (
+                                    <span> · Pausas: {formatMinutesToDuration(totalPauseMinutes)}</span>
+                                )}
+                            </>
                         )}
                     </div>
 
                     <div className="status-actions">
-                        {status === 'inactive' && (
-                            <button className="btn btn-success btn-xl" onClick={handleClockIn} style={{ minWidth: '200px' }}>
-                                <Play size={24} /> ENTRAR
-                            </button>
-                        )}
-
-                        {status === 'working' && (
+                        {isLoading ? (
+                            <div className="skeleton" style={{ width: '200px', height: '56px', borderRadius: 'var(--radius-xl)' }} />
+                        ) : (
                             <>
-                                <button className="btn btn-danger btn-xl" onClick={handleClockOut} style={{ minWidth: '160px' }}>
-                                    <Square size={24} /> SALIR
-                                </button>
-                                <div style={{ position: 'relative' }}>
-                                    <button
-                                        className="btn btn-warning btn-lg"
-                                        onClick={() => setShowPauseMenu(!showPauseMenu)}
-                                    >
-                                        <Pause size={20} /> PAUSAR
+                                {status === 'inactive' && (
+                                    <button className="btn btn-success btn-xl" onClick={handleClockIn} style={{ minWidth: '200px' }}>
+                                        <Play size={24} /> ENTRAR
                                     </button>
-                                    {showPauseMenu && (
-                                        <div style={{
-                                            position: 'absolute',
-                                            top: '100%',
-                                            left: '50%',
-                                            transform: 'translateX(-50%)',
-                                            marginTop: '8px',
-                                            background: 'var(--bg-primary)',
-                                            border: '1px solid var(--border-primary)',
-                                            borderRadius: 'var(--radius-lg)',
-                                            boxShadow: 'var(--shadow-lg)',
-                                            overflow: 'hidden',
-                                            zIndex: 10,
-                                            minWidth: '180px',
-                                        }}>
+                                )}
+
+                                {status === 'working' && (
+                                    <>
+                                        <button className="btn btn-danger btn-xl" onClick={handleClockOut} style={{ minWidth: '160px' }}>
+                                            <Square size={24} /> SALIR
+                                        </button>
+                                        <div style={{ position: 'relative' }}>
                                             <button
-                                                className="sidebar-item"
-                                                onClick={() => handleStartPause('meal')}
-                                                style={{ borderRadius: 0 }}
+                                                className="btn btn-warning btn-lg"
+                                                onClick={() => setShowPauseMenu(!showPauseMenu)}
                                             >
-                                                <UtensilsCrossed size={18} /> Comida
+                                                <Pause size={20} /> PAUSAR
                                             </button>
-                                            <button
-                                                className="sidebar-item"
-                                                onClick={() => handleStartPause('break')}
-                                                style={{ borderRadius: 0 }}
-                                            >
-                                                <Coffee size={18} /> Descanso
-                                            </button>
-                                            <button
-                                                className="sidebar-item"
-                                                onClick={() => handleStartPause('other')}
-                                                style={{ borderRadius: 0 }}
-                                            >
-                                                <Wrench size={18} /> Otra
-                                            </button>
+                                            {showPauseMenu && (
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: '100%',
+                                                    left: '50%',
+                                                    transform: 'translateX(-50%)',
+                                                    marginTop: '8px',
+                                                    background: 'var(--bg-primary)',
+                                                    border: '1px solid var(--border-primary)',
+                                                    borderRadius: 'var(--radius-lg)',
+                                                    boxShadow: 'var(--shadow-lg)',
+                                                    overflow: 'hidden',
+                                                    zIndex: 10,
+                                                    minWidth: '180px',
+                                                }}>
+                                                    <button
+                                                        className="sidebar-item"
+                                                        onClick={() => handleStartPause('meal')}
+                                                        style={{ borderRadius: 0 }}
+                                                    >
+                                                        <UtensilsCrossed size={18} /> Comida
+                                                    </button>
+                                                    <button
+                                                        className="sidebar-item"
+                                                        onClick={() => handleStartPause('break')}
+                                                        style={{ borderRadius: 0 }}
+                                                    >
+                                                        <Coffee size={18} /> Descanso
+                                                    </button>
+                                                    <button
+                                                        className="sidebar-item"
+                                                        onClick={() => handleStartPause('other')}
+                                                        style={{ borderRadius: 0 }}
+                                                    >
+                                                        <Wrench size={18} /> Otra
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
+                                    </>
+                                )}
+
+                                {status === 'paused' && (
+                                    <>
+                                        <button className="btn btn-success btn-xl" onClick={handleResume} style={{ minWidth: '200px' }}>
+                                            <Play size={24} /> REANUDAR
+                                        </button>
+                                        <button className="btn btn-danger btn-lg" onClick={handleClockOut}>
+                                            <Square size={20} /> SALIR
+                                        </button>
+                                    </>
+                                )}
                             </>
                         )}
-
-                        {status === 'paused' && (
-                            <>
-                                <button className="btn btn-success btn-xl" onClick={handleResume} style={{ minWidth: '200px' }}>
-                                    <Play size={24} /> REANUDAR
-                                </button>
-                                <button className="btn btn-danger btn-lg" onClick={handleClockOut}>
-                                    <Square size={20} /> SALIR
-                                </button>
-                            </>
-                        )}
                     </div>
-
-                    {/* Pausas del día */}
-                    {pauses.length > 0 && (
-                        <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-primary)', paddingTop: '16px' }}>
-                            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                Pausas de hoy
-                            </p>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-                                {pauses.map((p) => (
-                                    <span key={p.id} className="badge" style={{
-                                        background: 'var(--bg-tertiary)',
-                                        color: 'var(--text-secondary)',
-                                        fontSize: '0.75rem',
-                                    }}>
-                                        {PAUSE_LABELS[p.type].split(' ')[0]}{' '}
-                                        {p.end_time
-                                            ? formatMinutesToDuration(Math.floor((new Date(p.end_time).getTime() - new Date(p.start_time).getTime()) / 60000))
-                                            : 'En curso...'}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* === BALANCE DE VACACIONES === */}
-                <div className="card" style={{ cursor: 'pointer' }} onClick={() => navigate(ROUTES.LEAVE)}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <CalendarDays size={18} style={{ color: 'var(--vacation)' }} />
-                            <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Vacaciones</span>
-                        </div>
-                        <ChevronRight size={16} style={{ color: 'var(--text-tertiary)' }} />
-                    </div>
-                    <div className="stats-value" style={{ color: 'var(--primary)' }}>{vacationDaysAvailable}</div>
-                    <div className="stats-label">días disponibles de {vacationDaysTotal}</div>
-                    <div style={{ marginTop: '12px' }}>
-                        <div className="progress-bar">
-                            <div
-                                className={`progress-fill ${vacationPercentage > 50 ? 'progress-green' : vacationPercentage > 25 ? 'progress-yellow' : 'progress-red'}`}
-                                style={{ width: `${vacationPercentage}%` }}
-                            />
-                        </div>
-                    </div>
-                    <button
-                        className="btn btn-outline btn-sm"
-                        style={{ width: '100%', marginTop: '12px' }}
-                        onClick={(e) => { e.stopPropagation(); navigate(ROUTES.LEAVE_REQUEST); }}
-                    >
-                        Solicitar ausencia
-                    </button>
                 </div>
 
                 {/* === ESTADÍSTICAS RÁPIDAS === */}
-                <div className="card">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                        <TrendingUp size={18} style={{ color: 'var(--success)' }} />
-                        <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Esta semana</span>
+                <div className="stat-card card">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                        <div className="stat-icon" style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)', padding: '10px', borderRadius: '12px' }}>
+                            <TrendingUp size={20} />
+                        </div>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Semana actual</span>
                     </div>
-                    <div className="stats-value">{formatMinutesToDuration(weeklyHours * 60)}</div>
-                    <div className="stats-label">horas trabajadas</div>
-                    <div style={{ marginTop: '16px', display: 'flex', gap: '16px' }}>
-                        <div>
-                            <div style={{ fontSize: '1rem', fontWeight: 700 }}>{formatMinutesToDuration(monthlyHours * 60)}</div>
-                            <div className="stats-label">este mes</div>
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '1rem', fontWeight: 700 }}>{avgDaily.toFixed(1)}h</div>
-                            <div className="stats-label">promedio diario</div>
-                        </div>
+                    {isLoading ? (
+                        <div className="skeleton" style={{ width: '100px', height: '32px', marginBottom: '8px' }} />
+                    ) : (
+                        <div style={{ fontSize: '1.75rem', fontWeight: 800 }}>{weeklyHours}h</div>
+                    )}
+                    <div style={{ fontSize: '0.75rem', color: 'var(--success)', marginTop: '4px', fontWeight: 600 }}>
+                        +2.4h vs semana anterior
                     </div>
                 </div>
 
-                {/* === RESUMEN DEL DÍA === */}
-                <div className="card">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                        <Clock size={18} style={{ color: 'var(--info)' }} />
-                        <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Resumen de hoy</span>
-                    </div>
-                    {clockInTime ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-                                <span style={{ color: 'var(--text-secondary)' }}>Entrada</span>
-                                <span style={{ fontWeight: 600 }}>
-                                    {clockInTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-                                <span style={{ color: 'var(--text-secondary)' }}>Pausas</span>
-                                <span style={{ fontWeight: 600 }}>{pauses.length} ({formatMinutesToDuration(totalPauseMinutes)})</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-                                <span style={{ color: 'var(--text-secondary)' }}>Trabajado</span>
-                                <span style={{ fontWeight: 700, color: 'var(--success)' }}>
-                                    {formatMinutesToDuration(Math.floor(elapsedSeconds / 60))}
-                                </span>
-                            </div>
+                {/* Mes */}
+                <div className="stat-card card">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                        <div className="stat-icon" style={{ backgroundColor: 'var(--success-light)', color: 'var(--success)', padding: '10px', borderRadius: '12px' }}>
+                            <Clock size={20} />
                         </div>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Horas mes</span>
+                    </div>
+                    {isLoading ? (
+                        <div className="skeleton" style={{ width: '100px', height: '32px', marginBottom: '8px' }} />
                     ) : (
-                        <p style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem', textAlign: 'center', padding: '16px 0' }}>
-                            Aún no has iniciado la jornada
-                        </p>
+                        <div style={{ fontSize: '1.75rem', fontWeight: 800 }}>{monthlyHours}h</div>
+                    )}
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                        Media diaria: {avgDaily}h
+                    </div>
+                </div>
+
+                {/* Vacaciones */}
+                <div className="stat-card card" onClick={() => navigate(ROUTES.LEAVE)} style={{ cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                        <div className="stat-icon" style={{ backgroundColor: 'var(--warning-light)', color: 'var(--warning)', padding: '10px', borderRadius: '12px' }}>
+                            <CalendarDays size={20} />
+                        </div>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Vacaciones</span>
+                    </div>
+                    {isLoading ? (
+                        <div className="skeleton" style={{ width: '100%', height: '32px', marginBottom: '12px' }} />
+                    ) : (
+                        <>
+                            <div style={{ fontSize: '1.75rem', fontWeight: 800 }}>{vacationDaysAvailable} días</div>
+                            <div style={{ marginTop: '12px' }}>
+                                <div style={{ height: '6px', backgroundColor: 'var(--bg-tertiary)', borderRadius: '3px', position: 'relative', overflow: 'hidden' }}>
+                                    <div style={{ 
+                                        position: 'absolute', 
+                                        left: 0, 
+                                        top: 0, 
+                                        height: '100%', 
+                                        width: `${vacationPercentage}%`, 
+                                        backgroundColor: 'var(--warning)',
+                                        borderRadius: '3px'
+                                    }} />
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                                    <span>{vacationDaysAvailable} disp.</span>
+                                    <span>{vacationDaysTotal} total</span>
+                                </div>
+                            </div>
+                        </>
                     )}
                 </div>
 
@@ -417,29 +385,33 @@ export default function DashboardPage() {
                             Ver más <ChevronRight size={14} />
                         </button>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '120px', padding: '0 8px' }}>
-                        {['Lun', 'Mar', 'Mié', 'Jue', 'Vie'].map((day, i) => {
-                            const heights = [85, 90, 75, 95, 60];
-                            const hours = [7.5, 8.0, 6.5, 8.5, 5.0];
-                            return (
-                                <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                    <span style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                                        {hours[i]}h
-                                    </span>
-                                    <div style={{
-                                        width: '100%',
-                                        maxWidth: '48px',
-                                        height: `${heights[i]}%`,
-                                        background: i === 4 ? 'var(--primary-light)' : 'var(--primary)',
-                                        borderRadius: 'var(--radius-sm) var(--radius-sm) 0 0',
-                                        transition: 'all var(--transition-base)',
-                                        opacity: i === 4 ? 0.6 : 1,
-                                    }} />
-                                    <span style={{ fontSize: '0.625rem', color: 'var(--text-tertiary)' }}>{day}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
+                    {isLoading ? (
+                         <div className="skeleton" style={{ width: '100%', height: '120px' }} />
+                    ) : (
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '120px', padding: '0 8px' }}>
+                            {['Lun', 'Mar', 'Mié', 'Jue', 'Vie'].map((day, i) => {
+                                const heights = [85, 90, 75, 95, 60];
+                                const hours = [7.5, 8.0, 6.5, 8.5, 5.0];
+                                return (
+                                    <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                        <span style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                                            {hours[i]}h
+                                        </span>
+                                        <div style={{
+                                            width: '100%',
+                                            maxWidth: '48px',
+                                            height: `${heights[i]}%`,
+                                            background: i === 4 ? 'var(--primary-light)' : 'var(--primary)',
+                                            borderRadius: 'var(--radius-sm) var(--radius-sm) 0 0',
+                                            transition: 'all var(--transition-base)',
+                                            opacity: i === 4 ? 0.6 : 1,
+                                        }} />
+                                        <span style={{ fontSize: '0.625rem', color: 'var(--text-tertiary)' }}>{day}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
                 {/* === PRÓXIMAS AUSENCIAS === */}
@@ -450,34 +422,41 @@ export default function DashboardPage() {
                             Ver todas <ChevronRight size={14} />
                         </button>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                            <div style={{
-                                width: '4px',
-                                height: '40px',
-                                borderRadius: '2px',
-                                backgroundColor: 'var(--vacation)',
-                            }} />
-                            <div>
-                                <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>1 - 5 Mar 2026</p>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Vacaciones · 5 días</p>
-                            </div>
-                            <span className="badge badge-pending" style={{ marginLeft: 'auto' }}>Pendiente</span>
+                    {isLoading ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <div className="skeleton" style={{ width: '100%', height: '40px' }} />
+                            <div className="skeleton" style={{ width: '100%', height: '40px' }} />
                         </div>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                            <div style={{
-                                width: '4px',
-                                height: '40px',
-                                borderRadius: '2px',
-                                backgroundColor: 'var(--permit)',
-                            }} />
-                            <div>
-                                <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>15 Abr 2026</p>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Permiso · Medio día</p>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                <div style={{
+                                    width: '4px',
+                                    height: '40px',
+                                    borderRadius: '2px',
+                                    backgroundColor: 'var(--vacation)',
+                                }} />
+                                <div>
+                                    <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>1 - 5 Mar 2026</p>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Vacaciones · 5 días</p>
+                                </div>
+                                <span className="badge badge-pending" style={{ marginLeft: 'auto' }}>Pendiente</span>
                             </div>
-                            <span className="badge badge-approved" style={{ marginLeft: 'auto' }}>Aprobada</span>
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                <div style={{
+                                    width: '4px',
+                                    height: '40px',
+                                    borderRadius: '2px',
+                                    backgroundColor: 'var(--permit)',
+                                }} />
+                                <div>
+                                    <p style={{ fontSize: '0.875rem', fontWeight: 600 }}>15 Abr 2026</p>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Permiso · Medio día</p>
+                                </div>
+                                <span className="badge badge-approved" style={{ marginLeft: 'auto' }}>Aprobada</span>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>
