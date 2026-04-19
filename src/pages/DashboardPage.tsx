@@ -53,12 +53,21 @@ export default function DashboardPage() {
     useEffect(() => {
         if (!profile?.id) return;
 
+        // Fail-safe: Si Firebase tarda más de 5s, forzamos carga completada
+        const timeout = setTimeout(() => {
+            setIsLoading(false);
+        }, 5000);
+
         const unsubscribe = timeEntryService.subscribeToActiveEntry(profile.id, (entry) => {
+            clearTimeout(timeout);
             setActiveEntry(entry);
             setIsLoading(false);
         });
 
-        return () => unsubscribe();
+        return () => {
+            clearTimeout(timeout);
+            unsubscribe();
+        };
     }, [profile?.id]);
 
     // Timer en tiempo real

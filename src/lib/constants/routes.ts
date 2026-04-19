@@ -10,6 +10,7 @@ export const ROUTES = {
     REPORTS: '/reportes',
     PROFILE: '/perfil',
     ADMIN_DASHBOARD: '/admin',
+    MANUAL: '/manual',
 } as const;
 
 export const PUBLIC_ROUTES = [

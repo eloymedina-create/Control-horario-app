@@ -17,6 +17,8 @@ import LeaveRequestPage from '@/pages/LeaveRequestPage';
 import ReportsPage from '@/pages/ReportsPage';
 import ProfilePage from '@/pages/ProfilePage';
 import AdminDashboardPage from '@/pages/AdminDashboardPage';
+import ManualPage from '@/pages/ManualPage';
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,6 +78,7 @@ export default function App() {
                     </AdminRoute>
                   } 
                 />
+                <Route path={ROUTES.MANUAL} element={<ManualPage />} />
               </Route>
 
               {/* Catch all */}

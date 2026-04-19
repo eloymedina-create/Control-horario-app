@@ -10,6 +10,7 @@ import {
     LogOut,
     Timer,
     Shield,
+    BookOpen,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -18,6 +19,7 @@ const NAV_ITEMS = [
     { path: ROUTES.LEAVE, label: 'Ausencias', icon: CalendarDays },
     { path: ROUTES.REPORTS, label: 'Reportes', icon: BarChart3 },
     { path: ROUTES.PROFILE, label: 'Perfil', icon: User },
+    { path: ROUTES.MANUAL, label: 'Manual', icon: BookOpen },
 ];
 
 export function Sidebar() {

@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { ROUTES } from '@/lib/constants/routes';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, Clock, CalendarDays, BarChart3, User, Shield } from 'lucide-react';
+import { LayoutDashboard, Clock, CalendarDays, BarChart3, User, Shield, BookOpen } from 'lucide-react';
 
 interface NavItem {
     path: string;
@@ -17,6 +17,7 @@ export function BottomNav() {
         { path: ROUTES.HISTORY, label: 'Historial', icon: Clock },
         { path: ROUTES.LEAVE, label: 'Ausencias', icon: CalendarDays },
         { path: ROUTES.PROFILE, label: 'Perfil', icon: User },
+        { path: ROUTES.MANUAL, label: 'Manual', icon: BookOpen },
     ];
 
     if (profile?.role === 'admin') {
