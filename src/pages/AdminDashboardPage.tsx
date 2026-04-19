@@ -5,20 +5,14 @@ import { timeEntryService } from '@/lib/firebase/services/timeEntryService';
 import { userService } from '@/lib/firebase/services/userService';
 import { 
     Users, 
-    Play, 
-    Pause, 
-    Square, 
     Database, 
     Search,
     RefreshCw,
-    CheckCircle2,
-    AlertCircle,
     UserCog,
     Activity,
     Shield,
     ShieldAlert
 } from 'lucide-react';
-import { formatMinutesToDuration } from '@/lib/utils/formatting';
 import type { UserProfile } from '@/types/auth';
 
 type AdminTab = 'live' | 'users';

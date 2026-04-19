@@ -4,13 +4,10 @@ import {
     set, 
     update, 
     onValue, 
-    get, 
-    query, 
-    orderByChild, 
-    equalTo 
+    get
 } from 'firebase/database';
 import { db } from '../client';
-import type { TimeEntry, TimeEntryStatus, Pause, PauseType } from '@/types/timeEntry';
+import type { TimeEntry, Pause, PauseType } from '@/types/timeEntry';
 
 export const timeEntryService = {
     // Iniciar jornada
@@ -19,7 +16,7 @@ export const timeEntryService = {
         const entryId = entryRef.key!;
         
         const now = new Date().toISOString();
-        const date = now.split('T')[0];
+        const date = now.split('T')[0] || now; // Aseguramos que no sea undefined
         
         const newEntry: TimeEntry = {
             id: entryId,
@@ -149,8 +146,6 @@ export const timeEntryService = {
     // Listener para la entrada activa del usuario
     subscribeToActiveEntry(userId: string, callback: (entry: TimeEntry | null) => void) {
         const entriesRef = ref(db, `time_entries/${userId}`);
-        const activeQuery = query(entriesRef, orderByChild('status'), equalTo('active'));
-        const pausedQuery = query(entriesRef, orderByChild('status'), equalTo('paused'));
 
         // Nota: En RTDB no podemos hacer OR fácilmente. Escuchamos toda la rama del usuario 
         // y filtramos en el cliente para mayor simplicidad en tiempo real.

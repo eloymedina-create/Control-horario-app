@@ -3,10 +3,16 @@ import { ROUTES } from '@/lib/constants/routes';
 import { useAuth } from '@/contexts/AuthContext';
 import { LayoutDashboard, Clock, CalendarDays, BarChart3, User, Shield } from 'lucide-react';
 
+interface NavItem {
+    path: string;
+    label: string;
+    icon: any;
+}
+
 export function BottomNav() {
     const { profile } = useAuth();
 
-    const navItems = [
+    const navItems: NavItem[] = [
         { path: ROUTES.DASHBOARD, label: 'Inicio', icon: LayoutDashboard },
         { path: ROUTES.HISTORY, label: 'Historial', icon: Clock },
         { path: ROUTES.LEAVE, label: 'Ausencias', icon: CalendarDays },

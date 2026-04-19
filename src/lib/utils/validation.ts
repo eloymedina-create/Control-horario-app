@@ -41,12 +41,14 @@ export const timeEntryEditSchema = z.object({
 });
 
 export const leaveRequestSchema = z.object({
-    type: z.enum(['vacation', 'sick_leave', 'personal', 'training', 'other'], {
-        required_error: 'Selecciona el tipo de ausencia',
-    }),
-    duration: z.enum(['full_day', 'half_day', 'hours'], {
-        required_error: 'Selecciona la duración',
-    }),
+    type: z.string().refine(
+        (val) => ['vacation', 'sick_leave', 'personal', 'training', 'other'].includes(val),
+        { message: 'Selecciona el tipo de ausencia' }
+    ),
+    duration: z.string().refine(
+        (val) => ['full_day', 'half_day', 'hours'].includes(val),
+        { message: 'Selecciona la duración' }
+    ),
     start_date: z.string().min(1, 'La fecha de inicio es obligatoria'),
     end_date: z.string().min(1, 'La fecha de fin es obligatoria'),
     start_time: z.string().optional(),

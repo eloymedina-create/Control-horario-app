@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { useState, useEffect, useMemo } from 'react';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Clock, ChevronLeft, ChevronRight, Edit3, Download, Filter } from 'lucide-react';
 import { formatMinutesToDuration } from '@/lib/utils/formatting';
@@ -49,7 +49,7 @@ export default function HistoryPage() {
     })();
 
     const totalMinutes = useMemo(() => 
-        entries.reduce((sum, e) => sum + (e.total_hours ? e.total_hours * 60 : 0), 0)
+        entries.reduce((sum: number, e: TimeEntry) => sum + (e.total_hours ? e.total_hours * 60 : 0), 0)
     , [entries]);
 
     const avgMinutes = entries.length > 0 ? totalMinutes / entries.length : 0;
@@ -61,7 +61,7 @@ export default function HistoryPage() {
 
     const calculatePauseMinutes = (pauses?: any[]) => {
         if (!pauses) return 0;
-        return pauses.reduce((sum, p) => sum + (p.duration || 0), 0);
+        return pauses.reduce((sum: number, p: any) => sum + (p.duration || 0), 0);
     };
 
     if (isLoading) {
@@ -137,7 +137,7 @@ export default function HistoryPage() {
                         No hay registros para este periodo
                     </div>
                 ) : (
-                    entries.map((entry) => {
+                    entries.map((entry: TimeEntry) => {
                         const pausesMins = calculatePauseMinutes(entry.pauses);
                         return (
                             <div key={entry.id} className="time-entry-card">

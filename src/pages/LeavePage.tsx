@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/lib/constants/routes';
 import { CalendarDays, Plus, ChevronRight } from 'lucide-react';
@@ -39,6 +39,16 @@ export default function LeavePage() {
 
         loadData();
     }, [profile?.id]);
+
+    const filtered = useMemo(() => {
+        return leaves.filter((leave: LeaveRequest) => {
+            if (activeTab === 'all') return true;
+            if (activeTab === 'pending') return leave.status === 'pending';
+            if (activeTab === 'approved') return leave.status === 'approved';
+            if (activeTab === 'past') return ['rejected', 'cancelled', 'approved'].includes(leave.status);
+            return true;
+        });
+    }, [leaves, activeTab]);
 
     const statusBadgeClass = (status: LeaveStatus): string => {
         const map: Record<LeaveStatus, string> = {
@@ -140,7 +150,7 @@ export default function LeavePage() {
                 </div>
             ) : (
                 <div className="card" style={{ padding: 0 }}>
-                    {filtered.map((leave) => (
+                    {filtered.map((leave: LeaveRequest) => (
                         <div
                             key={leave.id}
                             style={{
@@ -152,8 +162,8 @@ export default function LeavePage() {
                                 cursor: 'pointer',
                                 transition: 'background var(--transition-fast)',
                             }}
-                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-secondary)')}
-                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '')}
+                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-secondary)')}
+                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '')}
                         >
                             <div style={{
                                 width: '4px',

@@ -1,10 +1,10 @@
-import { ref, push, set, get, update, query, orderByChild, equalTo } from 'firebase/database';
+import { ref, push, set, get, update } from 'firebase/database';
 import { db } from '../client';
-import type { LeaveRequest, VacationBalance, LeaveStatus } from '@/types/leave';
+import type { LeaveRequest, VacationBalance } from '@/types/leave';
 
 export const leaveService = {
     // Solicitar ausencia
-    async requestLeave(userId: string, data: Omit<LeaveRequest, 'id' | 'user_id' | 'status' | 'created_at' | 'updated_at'>): Promise<string> {
+    async requestLeave(userId: string, data: Omit<LeaveRequest, 'id' | 'user_id' | 'status' | 'created_at' | 'updated_at' | 'reviewed_at' | 'reviewed_by' | 'rejection_reason'>): Promise<string> {
         const leaveRef = push(ref(db, `leave_requests/${userId}`));
         const leaveId = leaveRef.key!;
         
