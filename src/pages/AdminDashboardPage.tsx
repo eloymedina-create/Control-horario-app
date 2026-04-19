@@ -13,6 +13,8 @@ import {
     Shield,
     ShieldAlert
 } from 'lucide-react';
+import { ref, update } from 'firebase/database';
+import { db } from '@/lib/firebase/client';
 import type { UserProfile } from '@/types/auth';
 
 type AdminTab = 'live' | 'users' | 'requests';

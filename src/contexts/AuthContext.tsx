@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         user: firebaseUser,
                         profile: {
                             id: firebaseUser.uid,
-                            full_name: firebaseUser.displayName || (isAdmin ? 'Admin' : 'Usuario'),
+                            full_name: firebaseUser.displayName || (isAdmin ? 'Administrador' : 'Empleado'),
                             email: firebaseUser.email || '',
                             avatar_url: null,
                             role: isAdmin ? 'admin' : 'employee',
@@ -154,6 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 email: email,
                 avatar_url: null,
                 role: isAdmin ? 'admin' : 'employee',
+                status: isAdmin ? 'active' : 'pending',
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
             };
